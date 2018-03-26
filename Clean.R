@@ -89,6 +89,10 @@ ingr$word <- sapply(ingr$word, try.error)
 ingrWordsB <- inner_join(blogWords,ingr,by='word')
 wordcloud(ingrWordsB$word, min.freq=25,
           random.color=T, max.word=200, random.order=F,colors=col)
+
+
+ingrWordsB <- data.frame(ingrWordsB, source = 'blog')
+ingrWordsB$source <- as.character(ingrWordsB$source)
 #write.csv(ingrWordsB,'ingrWordsB.csv')
 
 
@@ -191,8 +195,93 @@ colnames(ingrWordsR) = c('Date','word')
 
 #write.csv(ingrWordsR,'ingrWordsR.csv')
 
-###########When combining R and blogs
-ingrWords <- rbind(ingrWordsR, ingrWordsB)
+ingrWordsR <- data.frame(ingrWordsR, source = 'reddit')
+ingrWordsR$source <- as.character(ingrWordsR$source)
+
+##########Facebook
+
+setwd('~/GitHub/PIPPY-data/Data/Facebook')
+
+AcnePimpSol_comments <- read.csv('AcneAndPimpleSolutions_facebook_comments.csv')
+AcnePimpSol_statuses <- read.csv('AcneAndPimplesSolutions_facebook_statuses.csv')
+AcneAns_comments <- read.csv('AcneAnswers_facebook_comments.csv')
+AcneAns_statuses <- read.csv('AcneAnswers_facebook_statuses.csv')
+BettyOrg_comments <- read.csv('BettyOrganics_facebook_comments.csv')
+BettyOrg_statuses <- read.csv('BettyOrganics_facebook_statuses.csv')
+
+fb <- rbind(AcnePimpSol_comments[c('comment_message','comment_published')],AcnePimpSol_statuses[c('comment_message','comment_published')],AcneAns_comments[c('comment_message','comment_published')],AcneAns_statuses[c('comment_message','comment_published')],BettyOrg_comments[c('comment_message','comment_published')],BettyOrg_statuses[c('comment_message','comment_published')])
+
+pMiss <- function(x){sum(is.na(x))/length(x)*100}
+
+colnames(fb) = c('Text','Date')
+
+fb$Date <- as.character(fb$Date)
+fb$Text <- as.character(fb$Text)
+
+fb$Date[fb$Date==""] <- NA
+fb$Date[fb$Date=='None']<-NA
+fb$Text[fb$Text==""] <- NA
+keepers <- which(apply(fb,1,pMiss)==0)
+g_fb <- fb[keepers,]
+
+g_fb$Date <- as.Date(g_fb$Date, format = '%m/%d/%Y')
+keepers <- which(apply(g_fb,1,pMiss)==0)
+g_fb <- g_fb[keepers,]
+
+g_fb$Text = gsub("(RT|via)((?:\\b\\W*@\\w+)+)", "", g_fb$Text)
+# remove at people
+g_fb$Text = gsub("@\\w+", "", g_fb$Text)
+# remove punctuation
+g_fb$Text = gsub("[[:punct:]]", "", g_fb$Text)
+# remove numbers
+g_fb$Text = gsub("[[:digit:]]", "", g_fb$Text)
+# remove html links
+g_fb$Text = gsub("http\\w+", "", g_fb$Text)
+# remove unnecessary spaces
+g_fb$Text = gsub("[ \t]{2,}", "", g_fb$Text)
+g_fb$Text = gsub("^\\s+|\\s+$", "", g_fb$Text)
+g_fb$Text = gsub('???','',g_fb$Text)
+g_fb$Text = gsub('etc','',g_fb$Text)
+# define "tolower error handling" function 
+try.error = function(x)
+{
+  # create missing value
+  y = NA
+  # tryCatch error
+  try_error = tryCatch(tolower(x), error=function(e) e)
+  # if not an error
+  if (!inherits(try_error, "error"))
+    y = tolower(x)
+  # result
+  return(y)
+}
+# lower case using try.error with sapply 
+g_fb$Text = sapply(g_fb$Text, try.error)
+
+# remove NAs in g_fb$Text
+g_fb$Text = g_fb$Text[!is.na(g_fb$Text)]
+names(g_fb$Text) = NULL
+
+col=brewer.pal(6,"Dark2")
+wordcloud(g_fb$Text, min.freq=50, scale=c(5,2),rot.per = 0.25,
+          random.color=T, max.word=100, random.order=F,colors=col)
+
+fbWords <- g_fb %>% tidytext::unnest_tokens(word,Text) %>% anti_join(tidytext::stop_words)
+setwd("~/GitHub/PIPPY-data")
+ingr <- read.csv('Ingredients.csv')
+colnames(ingr) = c('Ingredient')
+ingr$Ingredient <- as.character(ingr$Ingredient)
+ingr <- ingr %>% tidytext::unnest_tokens(word,Ingredient) %>% anti_join(tidytext::stop_words)
+ingr$word <- sapply(ingr$word, try.error)
+ingrWordsF <- inner_join(fbWords,ingr,by='word')
+wordcloud(ingrWordsF$word, min.freq=25,
+          random.color=T, max.word=200, random.order=F,colors=col)
+
+ingrWordsF <- data.frame(ingrWordsF, source = 'facebook')
+ingrWordsF$source <- as.character(ingrWordsF$source)
+
+###########When combining R and blogs and Facebook
+ingrWords <- rbind(ingrWordsR, ingrWordsB,ingrWordsF)
 write.csv(ingrWords,'ingrWords.csv')
 
 
