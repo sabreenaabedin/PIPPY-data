@@ -1,0 +1,371 @@
+<?xml version='1.0' encoding='utf-8' ?>
+
+<!-- build 10500.18.0210.2209                               -->
+<workbook original-version='10.5' source-build='10.5.1 (10500.18.0210.2209)' source-platform='win' version='10.5' xmlns:user='http://www.tableausoftware.com/xml/user'>
+  <preferences>
+    <preference name='ui.encoding.shelf.height' value='24' />
+    <preference name='ui.shelf.height' value='26' />
+  </preferences>
+  <datasources>
+    <datasource caption='procTopics' inline='true' name='federated.1uy3zib0ya5wc91ax3ssi1l0ierj' version='10.5'>
+      <connection class='federated'>
+        <named-connections>
+          <named-connection caption='procTopics' name='textscan.1jdq3if0y7s7xy12334dn11xsmka'>
+            <connection class='textscan' directory='D:/Users/tss3dn/PycharmProjects/Capstone' filename='procTopics.csv' password='' server='' />
+          </named-connection>
+        </named-connections>
+        <relation connection='textscan.1jdq3if0y7s7xy12334dn11xsmka' name='procTopics.csv' table='[procTopics#csv]' type='table'>
+          <columns character-set='UTF-8' header='yes' locale='en_US' separator=','>
+            <column datatype='integer' name='F1' ordinal='0' />
+            <column datatype='integer' name='topic' ordinal='1' />
+            <column datatype='string' name='term' ordinal='2' />
+            <column datatype='real' name='beta' ordinal='3' />
+          </columns>
+        </relation>
+        <metadata-records>
+          <metadata-record class='capability'>
+            <remote-name />
+            <remote-type>0</remote-type>
+            <parent-name>[procTopics.csv]</parent-name>
+            <remote-alias />
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+            <attributes>
+              <attribute datatype='string' name='character-set'>&quot;UTF-8&quot;</attribute>
+              <attribute datatype='string' name='collation'>&quot;en_US&quot;</attribute>
+              <attribute datatype='string' name='field-delimiter'>&quot;,&quot;</attribute>
+              <attribute datatype='string' name='header-row'>&quot;true&quot;</attribute>
+              <attribute datatype='string' name='locale'>&quot;en_US&quot;</attribute>
+              <attribute datatype='string' name='single-char'>&quot;&quot;</attribute>
+            </attributes>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>F1</remote-name>
+            <remote-type>20</remote-type>
+            <local-name>[F1]</local-name>
+            <parent-name>[procTopics.csv]</parent-name>
+            <remote-alias>F1</remote-alias>
+            <ordinal>0</ordinal>
+            <local-type>integer</local-type>
+            <aggregation>Sum</aggregation>
+            <contains-null>true</contains-null>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>topic</remote-name>
+            <remote-type>20</remote-type>
+            <local-name>[topic]</local-name>
+            <parent-name>[procTopics.csv]</parent-name>
+            <remote-alias>topic</remote-alias>
+            <ordinal>1</ordinal>
+            <local-type>integer</local-type>
+            <aggregation>Sum</aggregation>
+            <contains-null>true</contains-null>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>term</remote-name>
+            <remote-type>129</remote-type>
+            <local-name>[term]</local-name>
+            <parent-name>[procTopics.csv]</parent-name>
+            <remote-alias>term</remote-alias>
+            <ordinal>2</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <scale>1</scale>
+            <width>1073741823</width>
+            <contains-null>true</contains-null>
+            <collation flag='0' name='LEN_RUS' />
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>beta</remote-name>
+            <remote-type>5</remote-type>
+            <local-name>[beta]</local-name>
+            <parent-name>[procTopics.csv]</parent-name>
+            <remote-alias>beta</remote-alias>
+            <ordinal>3</ordinal>
+            <local-type>real</local-type>
+            <aggregation>Sum</aggregation>
+            <contains-null>true</contains-null>
+          </metadata-record>
+        </metadata-records>
+      </connection>
+      <aliases enabled='yes' />
+      <column datatype='integer' name='[Number of Records]' role='measure' type='quantitative' user:auto-column='numrec'>
+        <calculation class='tableau' formula='1' />
+      </column>
+      <column caption='Beta' datatype='real' name='[beta]' role='measure' type='quantitative' />
+      <column caption='Term' datatype='string' name='[term]' role='dimension' type='nominal' />
+      <column caption='Topic' datatype='integer' name='[topic]' role='measure' type='quantitative' />
+      <layout dim-ordering='alphabetic' dim-percentage='0.411458' measure-ordering='alphabetic' measure-percentage='0.588542' show-structure='true' />
+      <semantic-values>
+        <semantic-value key='[Country].[Name]' value='&quot;United States&quot;' />
+      </semantic-values>
+    </datasource>
+  </datasources>
+  <worksheets>
+    <worksheet name='Acne Home Treatment Correlated Words'>
+      <table>
+        <view>
+          <datasources />
+          <aggregation value='true' />
+        </view>
+        <style />
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Automatic' />
+          </pane>
+        </panes>
+        <rows />
+        <cols />
+      </table>
+    </worksheet>
+    <worksheet name='Acne Subreddit Topic Modeling'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='procTopics' name='federated.1uy3zib0ya5wc91ax3ssi1l0ierj' />
+          </datasources>
+          <datasource-dependencies datasource='federated.1uy3zib0ya5wc91ax3ssi1l0ierj'>
+            <column-instance column='[term]' derivation='None' name='[none:term:nk]' pivot='key' type='nominal' />
+            <column-instance column='[topic]' derivation='None' name='[none:topic:ok]' pivot='key' type='ordinal' />
+            <column-instance column='[topic]' derivation='Sum' name='[sum:topic:qk]' pivot='key' type='quantitative' />
+            <column caption='Term' datatype='string' name='[term]' role='dimension' type='nominal' />
+            <column caption='Topic' datatype='integer' name='[topic]' role='measure' type='quantitative' />
+          </datasource-dependencies>
+          <filter class='quantitative' column='[federated.1uy3zib0ya5wc91ax3ssi1l0ierj].[sum:topic:qk]' included-values='all' />
+          <slices>
+            <column>[federated.1uy3zib0ya5wc91ax3ssi1l0ierj].[sum:topic:qk]</column>
+          </slices>
+          <aggregation value='true' />
+        </view>
+        <style />
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Automatic' />
+            <encodings>
+              <text column='[federated.1uy3zib0ya5wc91ax3ssi1l0ierj].[sum:topic:qk]' />
+            </encodings>
+            <style>
+              <style-rule element='mark'>
+                <format attr='mark-labels-show' value='true' />
+              </style-rule>
+            </style>
+          </pane>
+        </panes>
+        <rows>([federated.1uy3zib0ya5wc91ax3ssi1l0ierj].[none:topic:ok] / [federated.1uy3zib0ya5wc91ax3ssi1l0ierj].[none:term:nk])</rows>
+        <cols />
+      </table>
+    </worksheet>
+  </worksheets>
+  <dashboards>
+    <dashboard name='Acne Home Treatment Topic Modeling'>
+      <style />
+      <size maxheight='800' maxwidth='1000' minheight='800' minwidth='1000' />
+      <zones use-insets='false' />
+    </dashboard>
+  </dashboards>
+  <windows source-height='30'>
+    <window class='worksheet' maximized='true' name='Acne Subreddit Topic Modeling'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+          <strip size='160'>
+            <card type='title' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+          <strip size='2147483647'>
+            <card type='rows' />
+          </strip>
+        </edge>
+      </cards>
+      <viewpoint>
+        <highlight>
+          <color-one-way>
+            <field>[federated.1uy3zib0ya5wc91ax3ssi1l0ierj].[none:term:nk]</field>
+          </color-one-way>
+        </highlight>
+      </viewpoint>
+    </window>
+    <window class='dashboard' name='Acne Home Treatment Topic Modeling'>
+      <viewpoints />
+      <active id='-1' />
+    </window>
+    <window class='worksheet' name='Acne Home Treatment Correlated Words'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+          <strip size='2147483647'>
+            <card type='rows' />
+          </strip>
+          <strip size='31'>
+            <card type='title' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+  </windows>
+  <thumbnails>
+    <thumbnail height='192' name='Acne Home Treatment Correlated Words' width='192'>
+      iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAACXBIWXMAAA7DAAAOwwHHb6hk
+      AAACFUlEQVR4nO3TMQEAIAzAMMC/5yFjRxMFfXpnZg5Eve0A2GQA0gxAmgFIMwBpBiDNAKQZ
+      gDQDkGYA0gxAmgFIMwBpBiDNAKQZgDQDkGYA0gxAmgFIMwBpBiDNAKQZgDQDkGYA0gxAmgFI
+      MwBpBiDNAKQZgDQDkGYA0gxAmgFIMwBpBiDNAKQZgDQDkGYA0gxAmgFIMwBpBiDNAKQZgDQD
+      kGYA0gxAmgFIMwBpBiDNAKQZgDQDkGYA0gxAmgFIMwBpBiDNAKQZgDQDkGYA0gxAmgFIMwBp
+      BiDNAKQZgDQDkGYA0gxAmgFIMwBpBiDNAKQZgDQDkGYA0gxAmgFIMwBpBiDNAKQZgDQDkGYA
+      0gxAmgFIMwBpBiDNAKQZgDQDkGYA0gxAmgFIMwBpBiDNAKQZgDQDkGYA0gxAmgFIMwBpBiDN
+      AKQZgDQDkGYA0gxAmgFIMwBpBiDNAKQZgDQDkGYA0gxAmgFIMwBpBiDNAKQZgDQDkGYA0gxA
+      mgFIMwBpBiDNAKQZgDQDkGYA0gxAmgFIMwBpBiDNAKQZgDQDkGYA0gxAmgFIMwBpBiDNAKQZ
+      gDQDkGYA0gxAmgFIMwBpBiDNAKQZgDQDkGYA0gxAmgFIMwBpBiDNAKQZgDQDkGYA0gxAmgFI
+      MwBpBiDNAKQZgDQDkGYA0gxAmgFIMwBpBiDNAKQZgDQDkGYA0gxAmgFIMwBpBiDNAKR9Y+0F
+      fBUOM1sAAAAASUVORK5CYII=
+    </thumbnail>
+    <thumbnail height='192' name='Acne Subreddit Topic Modeling' width='192'>
+      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
+    </thumbnail>
+  </thumbnails>
+</workbook>

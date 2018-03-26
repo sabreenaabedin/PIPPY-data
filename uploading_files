@@ -1,0 +1,14 @@
+1. cd into the current directory
+
+
+then run following commands:
+
+2. git add *
+3. git commit -m "your message goes here!"
+4. git push origin master
+
+That should upload the new stuff. To download the new updates that others uploaded run:
+
+git pull
+
+
