@@ -2,6 +2,7 @@ import json
 import datetime
 import csv
 import time
+import re
 try:
     from urllib.request import urlopen, Request
 except ImportError:
@@ -9,13 +10,15 @@ except ImportError:
 
 app_id = "859372370885967"
 app_secret = "835843de8ab5a1339c604da9311ce1a7"  # DO NOT SHARE WITH ANYONE!
+group_ids = ["135818293109976","1582733551821102"] # Acne and pimples treatment
 
-
-file_ids = ["135818293109976","1582733551821102"]
+# input date formatted as YYYY-MM-DD
+since_date = "2008-01-01"
+until_date = "2018-03-26"
 
 access_token = app_id + "|" + app_secret
 
-for i in file_ids:
+for i in group_ids:
     def request_until_succeed(url):
         req = Request(url)
         success = False
@@ -43,17 +46,19 @@ for i in file_ids:
             return text.encode('utf-8')
     
     
-    def getFacebookCommentFeedUrl(base_url):
+    def getFacebookPageFeedUrl(base_url):
     
-        # Construct the URL string
-        fields = "&fields=id,message,reactions.limit(0).summary(true)" + \
-            ",created_time,comments,from,attachment"
+        # Construct the URL string; see http://stackoverflow.com/a/37239851 for
+        # Reactions parameters
+        fields = "&fields=message,link,created_time,type,name,id," + \
+            "comments.limit(0).summary(true),shares,reactions" + \
+            ".limit(0).summary(true),from"
         url = base_url + fields
     
         return url
     
     
-    def getReactionsForComments(base_url):
+    def getReactionsForStatuses(base_url):
     
         reaction_types = ['like', 'love', 'wow', 'haha', 'sad', 'angry']
         reactions_dict = {}   # dict of {status_id: tuple<6>}
@@ -67,9 +72,9 @@ for i in file_ids:
             data = json.loads(request_until_succeed(url))['data']
     
             data_processed = set()  # set() removes rare duplicates in statuses
-            for status in data:
-                id = status['id']
-                count = status['reactions']['summary']['total_count']
+            for comment in data:
+                id = comment['id']
+                count = comment['reactions']['summary']['total_count']
                 data_processed.add((id, count))
     
             for id, count in data_processed:
@@ -81,7 +86,7 @@ for i in file_ids:
         return reactions_dict
     
     
-    def processFacebookComment(comment, status_id, parent_id=''):
+    def processFacebookPageFeedStatus(status):
     
         # The status is now a Python dictionary, so for top-level items,
         # we can simply call the key.
@@ -89,146 +94,102 @@ for i in file_ids:
         # Additionally, some items may not always exist,
         # so must check for existence first
     
-        comment_id = comment['id']
-        comment_message = '' if 'message' not in comment or comment['message'] \
-            is '' else unicode_decode(comment['message'])
-        comment_author = unicode_decode(comment['from']['name'])
-        num_reactions = 0 if 'reactions' not in comment else \
-            comment['reactions']['summary']['total_count']
+        status_id = status['id']
     
-        if 'attachment' in comment:
-            attachment_type = comment['attachment']['type']
-            attachment_type = 'gif' if attachment_type == 'animated_image_share' \
-                else attachment_type
-            attach_tag = "[[{}]]".format(attachment_type.upper())
-            comment_message = attach_tag if comment_message is '' else \
-                comment_message + " " + attach_tag
+        comment_message = '' if 'message' not in status else \
+            unicode_decode(status['message'])
+   
     
         # Time needs special care since a) it's in UTC and
         # b) it's not easy to use in statistical programs.
     
         comment_published = datetime.datetime.strptime(
-            comment['created_time'], '%Y-%m-%dT%H:%M:%S+0000')
-        comment_published = comment_published + datetime.timedelta(hours=-5)  # EST
+            status['created_time'], '%Y-%m-%dT%H:%M:%S+0000')
+        comment_published = comment_published + \
+            datetime.timedelta(hours=-5)  # EST
         comment_published = comment_published.strftime(
             '%Y-%m-%d %H:%M:%S')  # best time format for spreadsheet programs
+        comment_author = unicode_decode(status['from']['name'])
     
-        # Return a tuple of all processed data
+        # Nested items require chaining dictionary keys.
     
-        return (comment_id, status_id, parent_id, comment_message, comment_author,
-                comment_published, num_reactions)
+        num_reactions = 0 if 'reactions' not in status else \
+            status['reactions']['summary']['total_count']
+        num_comments = 0 if 'comments' not in status else \
+            status['comments']['summary']['total_count']
+        num_shares = 0 if 'shares' not in status else status['shares']['count']
+    
+        return (status_id, comment_message, comment_author,
+                comment_published, num_reactions, num_comments, num_shares)
     
     
-    def scrapeFacebookPageFeedComments(page_id, access_token):
-        with open('{}_facebook_comments.csv'.format(i), 'w' , newline = "", encoding='utf-8') as file:
+    def scrapeFacebookPageFeedStatus(i, access_token, since_date, until_date):
+        with open('{}_facebook_statuses.csv'.format(i), 'w', newline = "", encoding='utf-8') as file:
             w = csv.writer(file)
-            w.writerow(["comment_id", "status_id", "parent_id", "comment_message",
-                        "comment_author", "comment_published", "num_reactions",
-                        "num_likes", "num_loves", "num_wows", "num_hahas",
-                        "num_sads", "num_angrys", "num_special"])
+            w.writerow(["status_id", "comment_message", "comment_author",
+                        "comment_published",
+                        "num_reactions", "num_comments", "num_shares", "num_likes",
+                        "num_loves", "num_wows", "num_hahas", "num_sads", "num_angrys" ,
+                        "num_special"])
     
-            num_processed = 0
+            has_next_page = True
+            num_processed = 0   # keep a count on how many we've processed
             scrape_starttime = datetime.datetime.now()
-            after = ''
-            base = "https://graph.facebook.com/v2.11"
-            parameters = "/?limit={}&access_token={}".format(
-                100, access_token)
     
-            print("Scraping {} Comments From Posts: {}\n".format(
+            # /feed endpoint pagenates througn an `until` and `paging` parameters
+            until = ''
+            paging = ''
+            base = "https://graph.facebook.com/v2.11"
+            node = "/{}/feed".format(i)
+            parameters = "/?limit={}&access_token={}".format(100, access_token)
+            since = "&since={}".format(since_date) if since_date \
+                is not '' else ''
+            until = "&until={}".format(until_date) if until_date \
+                is not '' else ''
+    
+            print("Scraping {} Facebook Group: {}\n".format(
                 i, scrape_starttime))
     
-            with open('{}_facebook_statuses.csv'.format(i), 'r', encoding='utf-8') as csvfile:
-                reader = csv.DictReader(csvfile)
+            while has_next_page:
+                until = '' if until is '' else "&until={}".format(until)
+                paging = '' if until is '' else "&__paging_token={}".format(paging)
+                base_url = base + node + parameters + since + until + paging
     
-                # Uncomment below line to scrape comments for a specific status_id
-                # reader = [dict(status_id='5550296508_10154352768246509')]
+                url = getFacebookPageFeedUrl(base_url)
+                statuses = json.loads(request_until_succeed(url))
+                reactions = getReactionsForStatuses(base_url)
     
-                for status in reader:
-                    has_next_page = True
+                for status in statuses['data']:
     
-                    while has_next_page:
+                    # Ensure it is a status with the expected metadata
+                    if 'reactions' in status:
+                        comment_data = processFacebookPageFeedStatus(status)
+                        reactions_data = reactions[comment_data[0]]
     
-                        node = "/{}/comments".format(status['status_id'])
-                        after = '' if after is '' else "&after={}".format(after)
-                        base_url = base + node + parameters + after
+                        # calculate thankful/pride through algebra
+                        num_special = comment_data[4] - sum(reactions_data)
+                        w.writerow(comment_data + reactions_data + (num_special,)) # THE PROBLEM IS status_data
     
-                        url = getFacebookCommentFeedUrl(base_url)
-                        # print(url)
-                        comments = json.loads(request_until_succeed(url))
-                        reactions = getReactionsForComments(base_url)
+                    # output progress occasionally to make sure code is not
+                    # stalling
+                    num_processed += 1
+                    if num_processed % 100 == 0:
+                        print("{} Statuses Processed: {}".format
+                              (num_processed, datetime.datetime.now()))
     
-                        for comment in comments['data']:
-                            comment_data = processFacebookComment(
-                                comment, status['status_id'])
-                            reactions_data = reactions[comment_data[0]]
+                # if there is no next page, we're done.
+                if 'paging' in statuses:
+                    next_url = statuses['paging']['next']
+                    until = re.search('until=([0-9]*?)(&|$)', next_url).group(1)
+                    paging = re.search(
+                        '__paging_token=(.*?)(&|$)', next_url).group(1)
     
-                            # calculate thankful/pride through algebra
-                            num_special = comment_data[6] - sum(reactions_data)
-                            w.writerow(comment_data + reactions_data +
-                                       (num_special, ))
+                else:
+                    has_next_page = False
     
-                            if 'comments' in comment:
-                                has_next_subpage = True
-                                sub_after = ''
-    
-                                while has_next_subpage:
-                                    sub_node = "/{}/comments".format(comment['id'])
-                                    sub_after = '' if sub_after is '' else "&after={}".format(
-                                        sub_after)
-                                    sub_base_url = base + sub_node + parameters + sub_after
-    
-                                    sub_url = getFacebookCommentFeedUrl(
-                                        sub_base_url)
-                                    sub_comments = json.loads(
-                                        request_until_succeed(sub_url))
-                                    sub_reactions = getReactionsForComments(
-                                        sub_base_url)
-    
-                                    for sub_comment in sub_comments['data']:
-                                        sub_comment_data = processFacebookComment(
-                                            sub_comment, status['status_id'], comment['id'])
-                                        sub_reactions_data = sub_reactions[
-                                            sub_comment_data[0]]
-    
-                                        num_sub_special = sub_comment_data[
-                                            6] - sum(sub_reactions_data)
-    
-                                        w.writerow(sub_comment_data +
-                                                   sub_reactions_data + (num_sub_special,))
-    
-                                        num_processed += 1
-                                        if num_processed % 100 == 0:
-                                            print("{} Comments Processed: {}".format(
-                                                num_processed,
-                                                datetime.datetime.now()))
-    
-                                    if 'paging' in sub_comments:
-                                        if 'next' in sub_comments['paging']:
-                                            sub_after = sub_comments[
-                                                'paging']['cursors']['after']
-                                        else:
-                                            has_next_subpage = False
-                                    else:
-                                        has_next_subpage = False
-    
-                            # output progress occasionally to make sure code is not
-                            # stalling
-                            num_processed += 1
-                            if num_processed % 100 == 0:
-                                print("{} Comments Processed: {}".format(
-                                    num_processed, datetime.datetime.now()))
-    
-                        if 'paging' in comments:
-                            if 'next' in comments['paging']:
-                                after = comments['paging']['cursors']['after']
-                            else:
-                                has_next_page = False
-                        else:
-                            has_next_page = False
-    
-            print("\nDone!\n{} Comments Processed in {}".format(
-                num_processed, datetime.datetime.now() - scrape_starttime))
+            print("\nDone!\n{} Statuses Processed in {}".format(
+                  num_processed, datetime.datetime.now() - scrape_starttime))
     
     
     if __name__ == '__main__':
-        scrapeFacebookPageFeedComments(i, access_token)
+        scrapeFacebookPageFeedStatus(i, access_token, since_date, until_date)
