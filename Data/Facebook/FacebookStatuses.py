@@ -10,7 +10,8 @@ except ImportError:
 
 app_id = "859372370885967"
 app_secret = "835843de8ab5a1339c604da9311ce1a7"  # DO NOT SHARE WITH ANYONE!
-group_ids = ["135818293109976","1582733551821102"] # Acne and pimples treatment
+group_ids = ["135818293109976","1582733551821102"] #Group 1: Acne and Pimple Solutions
+# Group 2: Betty Organics
 
 # input date formatted as YYYY-MM-DD
 since_date = "2008-01-01"
@@ -124,7 +125,7 @@ for i in group_ids:
     
     
     def scrapeFacebookPageFeedStatus(i, access_token, since_date, until_date):
-        with open('{}_facebook_statuses.csv'.format(i), 'w', newline = "", encoding='utf-8') as file:
+        with open('facebook_statuses_{}.csv'.format(i), 'w', newline = "", encoding='utf-8') as file:
             w = csv.writer(file)
             w.writerow(["status_id", "comment_message", "comment_author",
                         "comment_published",
