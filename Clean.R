@@ -200,22 +200,27 @@ ingrWordsR$source <- as.character(ingrWordsR$source)
 
 ##########Facebook
 
+library(lubridate)
 setwd('~/GitHub/PIPPY-data/Data/Facebook')
+temp = list.files(pattern="*.csv")
+for (i in 1:length(temp)) assign(temp[i], read.csv(temp[i], na.strings = ""))
 
-AcnePimpSol_comments <- read.csv('AcneAndPimpleSolutions_facebook_comments.csv')
-AcnePimpSol_statuses <- read.csv('AcneAndPimplesSolutions_facebook_statuses.csv')
-AcneAns_comments <- read.csv('AcneAnswers_facebook_comments.csv')
-AcneAns_statuses <- read.csv('AcneAnswers_facebook_statuses.csv')
-BettyOrg_comments <- read.csv('BettyOrganics_facebook_comments.csv')
-BettyOrg_statuses <- read.csv('BettyOrganics_facebook_statuses.csv')
+# Fix all the dates, first AcneAnswers dates are slightly different from the rest!
+AcneAnswers_facebook_comments.csv$comment_published <- mdy_hm(AcneAnswers_facebook_comments.csv$comment_published)
+AcneAnswers_facebook_statuses.csv$comment_published <- mdy_hm(AcneAnswers_facebook_statuses.csv$comment_published)
+facebook_comments_135818293109976.csv$comment_published <- ymd_hms(facebook_comments_135818293109976.csv$comment_published)
+facebook_comments_1582733551821102.csv$comment_published <- ymd_hms(facebook_comments_1582733551821102.csv$comment_published)
+facebook_statuses_135818293109976.csv$comment_published <- ymd_hms(facebook_statuses_135818293109976.csv$comment_published)
+facebook_statuses_1582733551821102.csv$comment_published <- ymd_hms(facebook_statuses_1582733551821102.csv$comment_published)
 
-fb <- rbind(AcnePimpSol_comments[c('comment_message','comment_published')],AcnePimpSol_statuses[c('comment_message','comment_published')],AcneAns_comments[c('comment_message','comment_published')],AcneAns_statuses[c('comment_message','comment_published')],BettyOrg_comments[c('comment_message','comment_published')],BettyOrg_statuses[c('comment_message','comment_published')])
+fb <- rbind(AcneAnswers_facebook_comments.csv[c('comment_message','comment_published')],AcneAnswers_facebook_statuses.csv[c('comment_message','comment_published')],facebook_comments_135818293109976.csv[c('comment_message','comment_published')],
+            facebook_comments_1582733551821102.csv[c('comment_message','comment_published')],facebook_statuses_135818293109976.csv[c('comment_message','comment_published')],
+            facebook_statuses_1582733551821102.csv[c('comment_message','comment_published')])
 
 pMiss <- function(x){sum(is.na(x))/length(x)*100}
 
 colnames(fb) = c('Text','Date')
 
-fb$Date <- as.character(fb$Date)
 fb$Text <- as.character(fb$Text)
 
 fb$Date[fb$Date==""] <- NA
@@ -224,9 +229,6 @@ fb$Text[fb$Text==""] <- NA
 keepers <- which(apply(fb,1,pMiss)==0)
 g_fb <- fb[keepers,]
 
-g_fb$Date <- as.Date(g_fb$Date, format = '%m/%d/%Y')
-keepers <- which(apply(g_fb,1,pMiss)==0)
-g_fb <- g_fb[keepers,]
 
 g_fb$Text = gsub("(RT|via)((?:\\b\\W*@\\w+)+)", "", g_fb$Text)
 # remove at people
