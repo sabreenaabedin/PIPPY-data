@@ -1,5 +1,5 @@
 from scrapinghub import ScrapinghubClient
-import os
+#import os
 import logging
 import pandas as pd
 import datetime
@@ -51,7 +51,6 @@ for spider_dict in spider_dicts_list:
             #os.chdir(directory)
             itemsDataFrame.to_csv(filename, mode = 'w', index = False)
          
-              
         # Check for empty fields
         colList = itemsDataFrame.columns.tolist()
         for col in colList:
