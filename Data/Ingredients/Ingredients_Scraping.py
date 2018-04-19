@@ -42,5 +42,5 @@ df['Description'] = listy2
 df = df[['Ingredient','Rating','Description']]
 
 # Put in CSV, append each time it updates   
-df.to_csv("ingredients.csv", mode = 'a', index = False)
+df.to_csv("ingredients.csv", mode = 'w', index = False)
 
