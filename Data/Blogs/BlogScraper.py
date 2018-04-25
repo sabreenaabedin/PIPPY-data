@@ -57,6 +57,6 @@ for spider_dict in spider_dicts_list:
             if itemsDataFrame[col].isnull().all():
                 logger.warning("Found Null Field, in job " + job_key_name +": " + col)
         # Delete the job from ScrapingHub
-        logger.debug("Deleting job " + job_key_name)
-        job.delete()
+        #logger.debug("Deleting job " + job_key_name)
+        #job.delete()
    
